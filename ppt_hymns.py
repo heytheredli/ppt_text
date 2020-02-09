@@ -14,7 +14,7 @@ def get_hymnal_url(title):
         if 'hymnary' in result:
             return result
 
-def get_hymn_lyrics(site, hymn_number=None, url=None):
+def get_hymn_lyrics(site, hymn_number=None, url=None, file_name=None):
     if site == 'christian study':
         if (hymn_number < 100) & (hymn_number >= 10):
             hymn_number = f'0{hymn_number}'
@@ -32,7 +32,9 @@ def get_hymn_lyrics(site, hymn_number=None, url=None):
             lyrics = lyrics.replace('<br/>', '')
             lyrics = lyrics.replace('<font size="1">', '').replace('</font>', '').replace('<font size="+2">', '')
             lyrics = lyrics.replace('[', '').replace(']', '').replace(',', '')
-            print(lyrics)
+            if lyrics is not None:
+                with open(file_name, 'a', encoding='utf-8') as f:
+                    f.write(lyrics)
     else:
         response = requests.get(url)
         soup = BeautifulSoup(response.text, "html.parser")
@@ -43,7 +45,10 @@ def get_hymn_lyrics(site, hymn_number=None, url=None):
                     lyrics = str(p)
                     lyrics = lyrics.replace('<br/>', '')
                     lyrics = lyrics.replace('<p>', '').replace('</p>', '')
-                    print(lyrics)
+                    if lyrics is not None:
+                        with open(file_name, 'a') as f:
+                            f.write(lyrics)
+                            f.write('\n')
             except:
                 pass
 
@@ -78,16 +83,23 @@ class color:
    END = '\033[0m'
 
 def main(hymn_numbers):
+    file_name = f'lyrics_for_{hymn_numbers.replace(",", "_")}.txt'
+    with open(file_name, 'w') as f:
+        f.write('Lyrics for Hymns\n')
     hymn_titles = get_hymn_titles()
     hymn_numbers = hymn_numbers.split(',')
     hymn_numbers = [int(x) for x in hymn_numbers]
     for hymn_number in hymn_numbers:
-        get_hymn_lyrics(site='christian study', hymn_number=hymn_number)
+        get_hymn_lyrics(site='christian study', hymn_number=hymn_number, file_name=file_name)
 
     for hymn_number in hymn_numbers:
-        print(color.BOLD + f'{hymn_number}: {hymn_titles[hymn_number]}' + color.END)
+        with open(file_name, 'a') as f:
+            f.write('\n')
+            f.write(hymn_titles[hymn_number])
+            f.write('\n')
         url = get_hymnal_url(title=hymn_titles[hymn_number] + ' hymn')
-        text = get_hymn_lyrics(site='hymnal', url=url)
+        get_hymn_lyrics(site='hymnal', url=url, file_name=file_name)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
